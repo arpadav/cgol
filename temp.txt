@@ -1,0 +1,41 @@
+checkedCell = [];
+// check where cells are alive from current gen
+for(var r = 0; r < resolution; r++){
+  // console.log(r);
+  for(var c = 0; c < resolution; c++){
+    // console.log(r);
+    // console.log(cellsB[r][c] + " " + r + " " + c);
+    if(cellsB[r][c]){
+      if(!(edge([r, c]))){
+        for(var cR = -1; cR <= 1; cR++){
+          for(var cC = -1; cC <= 1; cC++){
+            numNeighbor = 0;
+            index = (r + cR) * resolution + (c + cC);
+            // find num neighbors, push r + cR, c + cC to array as index
+            if(!checkedCell.includes(index)){
+              for(var cRcR = -1; cRcR <= 1; cRcR++){
+                for(var cCcC = -1; cCcC <= 1; cCcC++){
+                  if(cellsB[r + cR + cRcR][c + cC + cCcC] & (cRcR | cCcC)){ numNeighbor++ }
+                }
+              }
+              checkedCell.push(index);
+              // console.log(numNeighbor);
+              // console.log("----------------------------------");
+              // console.log(cellsB);
+              if(cellsB[r + cR][c + cC]){
+                if(numNeighbor < 2 || numNeighbor > 3){ cellsA[r + cR][c + cC] = 0; }
+              }else if(numNeighbor == 3){
+                cellsA[r + cR][c + cC] = 1;
+              }
+            }
+          }
+        }
+      }
+      // else if(){
+        // special cases when checking on edge
+        // getCellsToCheck([r, c]);
+      // }
+    }
+  }
+}
+repaint();

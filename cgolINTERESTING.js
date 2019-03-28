@@ -19,23 +19,21 @@ function init(){
   document.getElementById("clear").onclick = clear;
   document.getElementById("run").onclick = run;
   document.getElementById("test").onclick = test;
+  // curGenCells[0][0] = 1;
 }
 
 function test(){
-  res = 1000;
-  var x = new Array(res);
-  for (var i = 0; i < x.length; i++) {
-    x[i] = new Array(res);
-    console.log("huh");
-  }
-  console.log(x);
+  // var testArray = Array(cSize[1]).map(x => Array.apply(null, Array(cSize[0])).map(Number.valueOf, 0));
+  // var testArray = Array.apply(null, Array(cSize[1])).map(Array.prototype.valueOf, Array.apply(null, Array(cSize[0])).map(Number.prototype.valueOf, 0));
+  // var test2Array = Array(cSize[1]).fill(0).map(x => testArray);
+  console.log(curGenCells);
+  // console.log();
 }
 
 function run(){
   if(!running){
     running = true;
     document.getElementById("run").innerHTML = "Stop"
-    nextGenCells = copy(curGenCells);
     setEvoLoop();
   }else{
     running = false;
@@ -51,27 +49,28 @@ function setEvoLoop(){
 }
 
 function updateStates(){
-  checkedCell = [];
+  nextGenCells = curGenCells;
+  // check where cells are alive from current gen
   for(var r = 0; r < resolution; r++){
+    // console.log(r);
     for(var c = 0; c < resolution; c++){
+      // console.log(r);
+      // console.log(curGenCells[r][c] + " " + r + " " + c);
       if(curGenCells[r][c]){
         if(!(edge([r, c]))){
           for(var cR = -1; cR <= 1; cR++){
             for(var cC = -1; cC <= 1; cC++){
               numNeighbor = 0;
-              index = (r + cR) * resolution + (c + cC);
-              if(!checkedCell.includes(index)){
-                for(var cRcR = -1; cRcR <= 1; cRcR++){
-                  for(var cCcC = -1; cCcC <= 1; cCcC++){
-                    if(curGenCells[r + cR + cRcR][c + cC + cCcC] & (cRcR | cCcC)){ numNeighbor++ }
-                  }
+              // find num neighbors, push r + cR, c + cC to array as index
+              for(var cRcR = -1; cRcR <= 1; cRcR++){
+                for(var cCcC = -1; cCcC <= 1; cCcC++){
+                  if(curGenCells[r + cR + cRcR][c + cC + cCcC]){ numNeighbor++ }
                 }
-                checkedCell.push(index);
-                if(curGenCells[r + cR][c + cC]){
-                  if(numNeighbor < 2 || numNeighbor > 3){ nextGenCells[r + cR][c + cC] = 0; }
-                }else if(numNeighbor == 3){
-                  nextGenCells[r + cR][c + cC] = 1;
-                }
+              }
+              if(curGenCells[r + cR][c + cC]){
+                if(numNeighbor < 2 || numNeighbor > 3){ nextGenCells[r + cR][c + cC] = 0; }
+              }else{
+                if(numNeighbor == 3){ nextGenCells[r + cR][c + cC] = 1; }
               }
             }
           }
@@ -83,19 +82,39 @@ function updateStates(){
       }
     }
   }
+  // for each alive, get surrounding cell indicies (cellsToCheck)
+  // for each in cellsToCheck (AND not in checkedCell), find numNeighbor
+  // if else w numNeighbor, setting = to 1 or 0
+  // once done numNeighbor, PUSH INDEX INTO checkedCell
+  // for(var i = 0; i < curGenCells.length; i++){ getCellsToCheck(curGenCells[i]); }
+  // for(var i = 0; i < nextGenCells.length; i++){
+  //   testCells = surroundingCells(nextGenCells[i]);
+  //   testCells.splice(4, 1);
+  //   numNeighbor = 0;
+  //   for(var j = 0; j < testCells.length; j++){ if(curGenCells.includes(testCells[j])){ numNeighbor++; } }
+  //   if(curGenCells.includes(nextGenCells[i])){
+  //     if(numNeighbor < 2 || numNeighbor > 3){ nextGenCells.splice(i, 1); i--; }
+  //   }else{
+  //     if(numNeighbor != 3){ nextGenCells.splice(i, 1); i--; }
+  //   }
+  // }
+  // nextGenCells = nextGenCells.sort(function(x, y){ return x - y; });
   repaint();
-  curGenCells = copy(nextGenCells);
+  curGenCells = nextGenCells;
 }
 
-function copy(o) {
-   var output, v, key;
-   output = Array.isArray(o) ? [] : {};
-   for (key in o) {
-       v = o[key];
-       output[key] = (typeof v === "object") ? copy(v) : v;
-   }
-   return output;
-}
+// function surroundingCells(cell){
+//   return [cell - resolution - 1, cell - resolution, cell - resolution + 1,
+//           cell - 1,              cell,              cell + 1,
+//           cell + resolution - 1, cell + resolution, cell + resolution + 1];
+// }
+
+// function getCellsToCheck(cell){
+//   boundCells = surroundingCells(cell);
+//   // checking cells multiple times, can be more efficient
+//   for(var i = 0; i < boundCells.length; i++){ if(!nextGenCells.includes(boundCells[i])){ nextGenCells.push(boundCells[i]); } }
+//   // this line is pointless ?? ^
+// }
 
 function edge([row, col]){
   return (row >= cSize[1] - 3 || row <= 2 || col >= cSize[0] - 3 || col <= 2);
@@ -107,36 +126,54 @@ function repaint(){
   for(var r = 0; r < resolution; r++){
     for(var c = 0; c < resolution; c++){
       if(tempPixValue != nextGenCells[r][c]){
-        tempPixValue = !tempPixValue;
+        tempPixValue = ~tempPixValue;
         setFill(tempPixValue);
       }
-      fillPix([c * pxSize[0], r * pxSize[1]]);
+      fillPix([r * pxSize[1], c * pxSize[0]]);
     }
   }
+
+  // setFill(0);
+  // for(var i = 0; i < curGenCells.length; i++){
+  //   if(!nextGenCells.includes(curGenCells[i])){ fillPix(iToCoord(curGenCells[i])); }
+  // }
+  // setFill(1);
+  // toPaint = nextGenCells.diff(curGenCells);
+  // for(var i = 0; i < toPaint.length; i++){ fillPix(iToCoord(toPaint[i])); }
 }
 
+// function iToCoord(index){
+//   return [(index % resolution) * pxSize[0], Math.floor(index / resolution) * pxSize[1]];
+// }
+
+// Array.prototype.diff = function(a) {
+//     return this.filter(function(i) {return a.indexOf(i) < 0;});
+// };
+
 function resetCellArrays(){
-  curGenCells = Array.from(Array(resolution), _ => Array(resolution).fill(0));
   nextGenCells = Array.from(Array(resolution), _ => Array(resolution).fill(0));
+  // nextGenCells = Array.apply(null, Array(resolution)).map(Array.prototype.valueOf, Array.apply(null, Array(resolution)).map(Number.prototype.valueOf, 0));
+  curGenCells = nextGenCells;
 }
 
 function onClick(e) {
+  // console.log(curGenCells);
   isMouseMove = false;
 
   canvas.onmousedown = function() {
     isMouseDown = true;
     coord = [e.layerX - (e.layerX % pxSize[0]), e.layerY - (e.layerY % pxSize[1])];
-    setFill(1);
+    // console.log(coord);
     fillPix(coord);
     addCoord(coord);
   };
   document.onmouseup = function() {
     isMouseDown = false;
-    // curGenCells.sort(function(x, y){ return x - y; });
+    curGenCells.sort(function(x, y){ return x - y; });
   };
   if(isMouseDown){
     coord = [e.layerX - (e.layerX % pxSize[0]), e.layerY - (e.layerY % pxSize[1])];
-    setFill(1);
+    // console.log(coord);
     fillPix(coord);
     addCoord(coord);
   }
@@ -147,7 +184,10 @@ function fillPix(coord){
 }
 
 function addCoord(coord){
+  // console.log(curGenCells[Math.round(coord[0]/pxSize[0])][Math.round(coord[1]/pxSize[1])]);
   curGenCells[Math.round(coord[1]/pxSize[1])][Math.round(coord[0]/pxSize[0])] = 1;
+  // index = Math.round(resolution * (coord[1] * resolution + coord[0]) / cSize[0]);
+  // if(!curGenCells.includes(index) && index < resolution ** 2){ curGenCells.push(index); }
 }
 
 function clear(){
